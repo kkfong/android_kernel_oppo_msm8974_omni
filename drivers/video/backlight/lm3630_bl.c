@@ -28,9 +28,9 @@
 /* OPPO 2014-02-10 yxq Add begin for Find7S */
 #include <linux/pcb_version.h>
 /* OPPO 2014-02-10 yxq Add end */
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_VENDOR_EDIT
 #include <linux/boot_mode.h>
-#endif //CONFIG_MACH_OPPO
+#endif //CONFIG_VENDOR_EDIT
 #define REG_CTRL	0x00
 #define REG_CONFIG	0x01
 #define REG_BRT_A	0x03
@@ -63,7 +63,7 @@ struct lm3630_chip_data {
 	struct regmap *regmap;
 };
 
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_VENDOR_EDIT
 static int pre_brightness=0;
 #endif
 
@@ -90,13 +90,13 @@ static int lm3630_chip_init(struct lm3630_chip_data *pchip)
 
 #ifdef CONGIF_OPPO_CMCC_OPTR
     reg_val = 0x12; /* For 13077 CMCC */
-    if (get_pcb_version() >= 20) {
+    if (get_pcb_version_find7s()) {
         reg_val = 0x0F; /* For 13097 cmcctest */
     } else {
         reg_val = 0x12; /* For 13097 cmcc test */
     }
 #else
-    if (get_pcb_version() >= 20) {
+    if (get_pcb_version_find7s()) {
         reg_val = 0x12; /* For 13097 low power version */
     } else {
         reg_val = 0x16; /* For 13077 pvt panel */
@@ -201,7 +201,7 @@ static int lm3630_intr_config(struct lm3630_chip_data *pchip)
 	int ret;
 	struct lm3630_chip_data *pchip = lm3630_pchip;
 	pr_debug("%s: bl=%d\n", __func__,bl_level);
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_VENDOR_EDIT
 /* Xiaori.Yuan@Mobile Phone Software Dept.Driver, 2014/04/28  Add for add log for 14001 black screen */
 		if(pre_brightness == 0)
 			{pr_err("%s set brightness :  %d \n",__func__,bl_level);}
@@ -234,20 +234,20 @@ static int lm3630_intr_config(struct lm3630_chip_data *pchip)
 		if (ret < 0)
 			goto out;
 		mdelay(1);
-#if 1
+#ifndef CONFIG_VENDOR_EDIT
 		ret = regmap_write(pchip->regmap,
 				   REG_BRT_A, bl_level);
-#else /* CONFIG_MACH_OPPO */
+#else /*VENDOR_EDIT*/
 		if(bl_level>20)
 			ret = regmap_write(pchip->regmap,
 				   REG_BRT_A, bl_level);
-		else if(get_pcb_version() < 20)
+		else if(!get_pcb_version_find7s())
 			ret = regmap_write(pchip->regmap,
 				   REG_BRT_A, 2+(bl_level-1)*7/18);
 		else
 			ret = regmap_write(pchip->regmap,
 				   REG_BRT_A, 2+(bl_level-1)*9/18);
-#endif /* CONFIG_MACH_OPPO */
+#endif /*VENDOR_EDIT*/
 		if (ret < 0)
 			goto out;
 	return bl_level;
@@ -347,7 +347,7 @@ static int lm3630_dt(struct device *dev, struct lm3630_platform_data *pdata)
 }
 #endif
 
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_VENDOR_EDIT
 /* OPPO zhanglong add 2013-08-30 for ftm test LCD backlight */
 static ssize_t ftmbacklight_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
@@ -372,7 +372,7 @@ static ssize_t ftmbacklight_store(struct device *dev,
 }
     DEVICE_ATTR(ftmbacklight, 0644, NULL, ftmbacklight_store);
 /* OPPO zhanglong add 2013-08-30 for ftm test LCD backlight end */
-#endif //CONFIG_MACH_OPPO
+#endif //CONFIG_VENDOR_EDIT
 
 #define LM3630_ENABLE_GPIO   91
 static int lm3630_probe(struct i2c_client *client,
@@ -465,14 +465,14 @@ static int lm3630_probe(struct i2c_client *client,
 	printk("%s:yanghai----\n", __func__);
 	dev_err(&client->dev, "LM3630 backlight register OK.\n");
 
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_VENDOR_EDIT
 /* OPPO zhanglong add 2013-08-30 for ftm test LCD backlight */
     ret = device_create_file(&client->dev, &dev_attr_ftmbacklight);
 	if (ret < 0) {
 		dev_err(&client->dev, "failed to create node ftmbacklight\n");
 	}
 /* OPPO zhanglong add 2013-08-30 for ftm test LCD backlight end */
-#endif //CONFIG_MACH_OPPO
+#endif //CONFIG_VENDOR_EDIT
 
 	/* Always enable PWM mode */
 	regmap_update_bits(lm3630_pchip->regmap, REG_CONFIG, 0x01, 0x01);
@@ -494,11 +494,11 @@ static int lm3630_remove(struct i2c_client *client)
 	int ret;
 	struct lm3630_chip_data *pchip = i2c_get_clientdata(client);
 
-#ifdef CONFIG_MACH_OPPO
+#ifdef CONFIG_VENDOR_EDIT
 /* OPPO zhanglong add 2013-08-30 for ftm test LCD backlight */
     device_remove_file(&client->dev, &dev_attr_ftmbacklight);
 /* OPPO zhanglong add 2013-08-30 for ftm test LCD backlight end */
-#endif //CONFIG_MACH_OPPO
+#endif //CONFIG_VENDOR_EDIT
 
 	ret = regmap_write(pchip->regmap, REG_BRT_A, 0);
 	if (ret < 0)
