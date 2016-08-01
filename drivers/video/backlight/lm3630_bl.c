@@ -463,7 +463,9 @@ static int lm3630_probe(struct i2c_client *client,
     } else {
         temp = "unknown";
     }
+#ifdef CONFIG_OPPO_DEVICE_INFO
     register_device_proc("backlight", temp, "LM3630A");
+#endif
 /* OPPO 2013-10-24 yxq Add end */
 	if (ret < 0) {
 		dev_err(&client->dev, "fail : init chip\n");
